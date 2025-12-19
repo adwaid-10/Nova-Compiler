@@ -496,9 +496,6 @@ namespace mlir
 
         return v;
       }
-
-    
-    
     };
     // pattern to convert nova.gelu to seauence of operations
     /// gelu(x) = 0.5 * x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 * x^3)))
@@ -509,7 +506,13 @@ namespace mlir
       {
         Location loc = op.getLoc();
         Value input = adaptor.getLhs();
+        // if input is integer, cast to float and update type for following ops
         auto inputType = cast<RankedTensorType>(input.getType());
+        if (isa<IntegerType>(inputType.getElementType())) {
+          auto newInputType = RankedTensorType::get(inputType.getShape(), rewriter.getF32Type());
+          input = rewriter.create<tosa::CastOp>(loc, newInputType, input);
+          inputType = newInputType;
+        }
         // op0 = pow(x, 3)
         Value cst_3 = rewriter.create<nova::ConstantOp>(
             loc, inputType, DenseElementsAttr::get(inputType, {3.0f}));

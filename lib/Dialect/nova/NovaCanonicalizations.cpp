@@ -100,7 +100,7 @@ struct EliminateAddZero : public OpRewritePattern<AddOp> {
   LogicalResult matchAndRewrite(AddOp op, PatternRewriter &rewriter) const override {
 
     // Check if RHS is a zero
-    if (auto rhsDefOp = op.getRhs().getDefiningOp<arith::ConstantOp>()) {
+    if (auto rhsDefOp = op.getRhs().getDefiningOp<nova::ConstantOp>()) {
       if (auto denseAttr = dyn_cast<DenseElementsAttr>(rhsDefOp.getValue())) {
         if (denseAttr.isSplat() && isSplatZero(denseAttr)) {
           rewriter.replaceOp(op, op.getLhs());
@@ -110,7 +110,7 @@ struct EliminateAddZero : public OpRewritePattern<AddOp> {
     }
 
     // Check if LHS is zero
-    if (auto lhsDefOp = op.getLhs().getDefiningOp<arith::ConstantOp>()) {
+    if (auto lhsDefOp = op.getLhs().getDefiningOp<nova::ConstantOp>()) {
       if (auto denseAttr = dyn_cast<DenseElementsAttr>(lhsDefOp.getValue())) {
         if (denseAttr.isSplat() && isSplatZero(denseAttr)) {
           rewriter.replaceOp(op, op.getRhs());
@@ -204,6 +204,56 @@ struct CombineAddConstants : public OpRewritePattern<AddOp> {
 
     // Replace with new addition
     rewriter.replaceOpWithNewOp<AddOp>(op, op.getType(), otherOperand, newConst);
+
+    return success();
+  }
+};
+
+//-----------------------------------
+//Constant folding(Add)(C1 + C2)
+//-----------------------------------
+
+struct ConstantFoldAdd : public OpRewritePattern<AddOp> {
+  using OpRewritePattern<AddOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(AddOp op,
+                                PatternRewriter &rewriter) const override {
+    // Check if both are constant
+    auto lhsConst = op.getLhs().getDefiningOp<nova::ConstantOp>();
+    auto rhsConst = op.getRhs().getDefiningOp<nova::ConstantOp>();
+
+    if (!lhsConst || !rhsConst)
+      return failure();
+
+    auto lhsAttr = dyn_cast<DenseElementsAttr>(lhsConst.getValue());
+    auto rhsAttr = dyn_cast<DenseElementsAttr>(rhsConst.getValue());
+    
+    if (!lhsAttr || !rhsAttr || !lhsAttr.isSplat() || !rhsAttr.isSplat())
+      return failure();
+
+
+    auto elementType = lhsAttr.getElementType();
+    auto resType = cast<ShapedType>(op.getType());
+    TypedAttr newConstAttr;
+    
+    if (isa<FloatType>(elementType)) {
+      APFloat val1 = lhsAttr.getSplatValue<APFloat>();
+      APFloat val2 = rhsAttr.getSplatValue<APFloat>();
+      val1.add(val2, APFloat::rmNearestTiesToEven);
+      newConstAttr = DenseElementsAttr::get(resType, val1);
+      
+    } else if (isa<IntegerType>(elementType)) {
+      APInt val1 = lhsAttr.getSplatValue<APInt>();
+      APInt val2 = rhsAttr.getSplatValue<APInt>();
+      newConstAttr = DenseElementsAttr::get(resType, val1 + val2);
+      
+    }
+
+    if (!newConstAttr)
+      return failure();
+
+    // Replace with new addition
+    rewriter.replaceOpWithNewOp<nova::ConstantOp>(op, newConstAttr, resType);
 
     return success();
   }
@@ -519,6 +569,7 @@ void AddOp::getCanonicalizationPatterns(RewritePatternSet &results,
   results.add<InsertBroadcastPattern<AddOp>>(context);
   results.add<EliminateAddZero>(context);
   results.add<CombineAddConstants>(context);
+ results.add<ConstantFoldAdd>(context);
 }
 
 void SubOp::getCanonicalizationPatterns(RewritePatternSet &results, 

@@ -1129,7 +1129,6 @@ namespace mlir
           target.addIllegalOp<nova::SignOp>();
           target.addIllegalOp<nova::ArgMinOp>();
           target.addIllegalOp<nova::TransposeOp>();
-
           target.markUnknownOpDynamicallyLegal([](Operation *)
                                                { return true; });
           RewritePatternSet patterns(context);

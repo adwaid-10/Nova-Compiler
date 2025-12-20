@@ -5,9 +5,9 @@
 // }
 //}
 module {
-  func.func @main(%arg0: tensor<1x2x3xi32>) -> tensor<1x2x3xf32> {
-    %1=nova.tanh %arg0  : tensor<1x2x3xi32>
- return %1 :tensor<1x2x3xf32>
+  func.func @main(%arg0: tensor<1x2x3xi32>) -> tensor<1x3x2xi32> {
+    %1=nova.transpose %arg0  : tensor<1x2x3xi32>
+ return %1 :tensor<1x3x2xi32>
  }
 }
 //module {

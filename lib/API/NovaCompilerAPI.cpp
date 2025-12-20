@@ -4,6 +4,9 @@
 
 #include "mlir/Dialect/Tensor/Transforms/BufferizableOpInterfaceImpl.h"
 #include "mlir/Dialect/Linalg/Transforms/BufferizableOpInterfaceImpl.h"
+#include "mlir/Dialect/Arith/Transforms/BufferizableOpInterfaceImpl.h"
+#include "mlir/Dialect/SCF/Transforms/BufferizableOpInterfaceImpl.h"
+#include "mlir/Dialect/Vector/Transforms/BufferizableOpInterfaceImpl.h"
 #include "mlir/Dialect/Bufferization/Transforms/FuncBufferizableOpInterfaceImpl.h"
 
 #include "mlir/Parser/Parser.h"
@@ -12,6 +15,15 @@
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Target/LLVMIR/Export.h"
 #include "mlir/Target/LLVMIR/Dialect/All.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/Dialect/Tosa/IR/TosaOps.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/Vector/IR/VectorOps.h"
+#include "mlir/Dialect/Bufferization/IR/Bufferization.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/FileSystem.h"
@@ -37,20 +49,30 @@ NovaCompilerAPI::NovaCompilerAPI() {
   // Create and populate dialect registry first
   DialectRegistry registry;
   
-  // Register Nova dialect
-  registry.insert<mlir::nova::NovaDialect>();
+  // Register necessary dialects
+  registry.insert<mlir::nova::NovaDialect,
+                 mlir::func::FuncDialect,
+                 mlir::arith::ArithDialect,
+                 mlir::tensor::TensorDialect,
+                 mlir::linalg::LinalgDialect,
+                 mlir::scf::SCFDialect,
+                 mlir::tosa::TosaDialect,
+                 mlir::memref::MemRefDialect,
+                 mlir::vector::VectorDialect,
+                 mlir::bufferization::BufferizationDialect>();
   
   mlir::tensor::registerBufferizableOpInterfaceExternalModels(registry);
   mlir::linalg::registerBufferizableOpInterfaceExternalModels(registry);
+  mlir::arith::registerBufferizableOpInterfaceExternalModels(registry);
+  mlir::scf::registerBufferizableOpInterfaceExternalModels(registry);
+  mlir::vector::registerBufferizableOpInterfaceExternalModels(registry);
   mlir::bufferization::func_ext::registerBufferizableOpInterfaceExternalModels(registry);
-
 
   // Register LLVM IR translation
   registerLLVMDialectTranslation(registry);
   registerAllToLLVMIRTranslations(registry);
   
   context->appendDialectRegistry(registry);
-  
   context->loadAllAvailableDialects();
 }
 
@@ -152,7 +174,7 @@ CompilationResult NovaCompilerAPI::compileModule(ModuleOp module,
 LogicalResult NovaCompilerAPI::runPipeline(ModuleOp module, 
                                            const CompilerOptions &options) {
   // Create a PassManager that operates on ModuleOp
-  PassManager pm(module->getName());
+  PassManager pm(context.get());
   
   if (options.verbose) {
     pm.enableIRPrinting();

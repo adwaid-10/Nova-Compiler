@@ -16,6 +16,9 @@
 #include "mlir/Dialect/Complex/IR/Complex.h"
 
 #include "Compiler/Translation/NovaToTosa/NovaToTosa.h"
+#include "Compiler/Translation/NovaToArith/NovaToArith.h"
+#include "Compiler/Translation/NovaToLinalg/NovaToLinalg.h"
+
 #include "Compiler/Dialect/nova/NovaOps.h"
 #include "Compiler/Dialect/nova/NovaDialect.h"
 namespace mlir
@@ -100,7 +103,45 @@ namespace mlir
         auto w = builder->create<tosa::CastOp>(op.getLoc(), restensor, input[1]);
         return builder->create<tosa::MinimumOp>(op.getLoc(), resultType, v, w);
       }
+      static Value mappingtosa(nova::TransposeOp op,Type resultType,ValueRange input,OpBuilder *builder)
+      {
+  auto loc = op.getLoc();
 
+auto inputType = dyn_cast<mlir::TensorType>(input[0].getType());
+ auto resultTensorType =dyn_cast<mlir::TensorType>(resultType);
+if (!inputType || !resultTensorType) {
+    op.emitError("expected ranked tensor types");
+    return nullptr;
+}
+
+int64_t rank = inputType.getRank();
+auto inShape  = inputType.getShape();
+auto outShape = resultTensorType.getShape();
+
+// ---- derive permutation ----
+llvm::SmallVector<int32_t> perms;
+perms.reserve(rank);
+llvm::SmallVector<bool> used(rank, false);
+
+for (int64_t i = 0; i < rank; ++i) {
+    bool found = false;
+    for (int64_t j = 0; j < rank; ++j) {
+        if (!used[j] && inShape[j] == outShape[i]) {
+            perms.push_back(static_cast<int32_t>(j));
+            used[j] = true;
+            found = true;
+            break;
+        }
+    }
+}
+
+// ---- create transpose ----
+auto permsAttr = builder->getDenseI32ArrayAttr(perms);
+
+return builder->create<tosa::TransposeOp>(
+    loc, resultTensorType, input[0], permsAttr);
+
+      }
       static Value mappingtosa(nova::AndOp op, Type resultType, ValueRange input, OpBuilder *builder)
       {
         auto restensor = dyn_cast<mlir::TensorType>(resultType);
@@ -1189,6 +1230,8 @@ namespace mlir
           target.addIllegalOp<nova::SoftmaxOp>();
           target.addIllegalOp<nova::MatmulOp>();
           target.addIllegalOp<nova::AddOp>();
+          target.addIllegalOp<nova::ConstantOp>();
+          target.addIllegalOp<nova::TransposeOp>();
           target.markUnknownOpDynamicallyLegal([](Operation *) { return true; });
           TypeConverter typeConverter;
           typeConverter.addConversion([](Type type)
@@ -1196,6 +1239,9 @@ namespace mlir
           RewritePatternSet patterns(&getContext());
           populateNovaToTosaConversionPatterns(patterns);
           populateNovaToTosaTemplatePatterns(patterns);
+          populateNovaToArithConversionPatterns(patterns);
+       //   populateNovaToLinalgPatterns(patterns);
+         // populateNovaToLinalgPatternsTemplate(patterns);
 
 
           if (failed(applyPartialConversion(module, target, std::move(patterns))))
@@ -1227,6 +1273,7 @@ namespace mlir
                    NovaToTosaLoweringTemplate<nova::XorOp>,
                    NovaToTosaLoweringTemplate<nova::NotOp>,
                    NovaToTosaLoweringTemplate<nova::NegOp>,
+                   NovaToTosaLoweringTemplate<nova::TransposeOp>,
                    NovaToTosaLoweringTemplate<nova::ReciprocalOp>,
                    NovaToTosaLoweringTemplate<nova::ReduceOp>,
                    NovaToTosaLoweringTemplate<nova::ArgmaxOp>,

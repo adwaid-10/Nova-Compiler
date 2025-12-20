@@ -443,50 +443,50 @@ namespace mlir
         //   return genericOp.getResult(0);
     //   }               
   };
-    struct NovaTransposeOpLowering : public OpConversionPattern<nova::TransposeOp>
-    {
-      using OpConversionPattern<nova::TransposeOp>::OpConversionPattern;
+//     struct NovaTransposeOpLowering : public OpConversionPattern<nova::TransposeOp>
+//     {
+//       using OpConversionPattern<nova::TransposeOp>::OpConversionPattern;
 
-      LogicalResult
-      matchAndRewrite(nova::TransposeOp op, OpAdaptor adaptor,
-                      ConversionPatternRewriter &rewriter) const override
-      {        
-        auto resultType = llvm::dyn_cast<RankedTensorType>(op.getType());
-        auto resultshape=dyn_cast<RankedTensorType>(resultType).getShape();
-        llvm::SmallVector<int64_t> resshape;
-        auto size =resultshape.size();
-        int axes1=op.getAxes1();
-        int axes2=op.getAxes2();
-        if(axes1<0)
-        axes1+=size;
-        if(axes2<0)
-        axes2+=size;
-        for(int64_t i=0;i<resultshape.size();i++){
-        if(i==axes1){
-          resshape.push_back(axes2);
-        }
-        else if(i==axes2){
-          resshape.push_back(axes1);
-        }
-        else{
-          resshape.push_back(i);
-        }
-        }
+//       LogicalResult
+//       matchAndRewrite(nova::TransposeOp op, OpAdaptor adaptor,
+//                       ConversionPatternRewriter &rewriter) const override
+//       {        
+//         auto resultType = llvm::dyn_cast<RankedTensorType>(op.getType());
+//         auto resultshape=dyn_cast<RankedTensorType>(resultType).getShape();
+//         llvm::SmallVector<int64_t> resshape;
+//         auto size =resultshape.size();
+//         int axes1=op.getAxes1();
+//         int axes2=op.getAxes2();
+//         if(axes1<0)
+//         axes1+=size;
+//         if(axes2<0)
+//         axes2+=size;
+//         for(int64_t i=0;i<resultshape.size();i++){
+//         if(i==axes1){
+//           resshape.push_back(axes2);
+//         }
+//         else if(i==axes2){
+//           resshape.push_back(axes1);
+//         }
+//         else{
+//           resshape.push_back(i);
+//         }
+//         }
          
-        Location loc = op.getLoc();
-        auto permutedInit = rewriter.create<tensor::EmptyOp>(
-       loc, resultshape, op.getInput().getType().getElementType()); 
-        rewriter.replaceOpWithNewOp<linalg::TransposeOp>(
-        op, op.getInput(), permutedInit,resshape);
-        return success();
-      }
- };
+//         Location loc = op.getLoc();
+//         auto permutedInit = rewriter.create<tensor::EmptyOp>(
+//        loc, resultshape, op.getInput().getType().getElementType()); 
+//         rewriter.replaceOpWithNewOp<linalg::TransposeOp>(
+//         op, op.getInput(), permutedInit,resshape);
+//         return success();
+//       }
+//  };
 
     void populateNovaToLinalgPatterns(RewritePatternSet &patterns)
     {
       patterns.add<NovaMatmulOpLowering,
                    NovaBroadcastInDimOpLowering,
-                   NovaTransposeOpLowering,
+                  // NovaTransposeOpLowering,
                    NovaDivopLowering
                    //    ,NovaSquareOpLowering
                    >(patterns.getContext());

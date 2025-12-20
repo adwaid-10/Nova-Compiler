@@ -38,7 +38,7 @@ def Nova_Comparisonenum:I32EnumAttr<"ComparisonType","How operands should be com
 
 
 //comparison defintion
-def Nova_CompareOp:Op<Nova_Dialect,"compare",[Pure,InferTypeOpInterface
+def Nova_CompareOp:Op<Nova_Dialect,"compare",[Pure,InferTypeOpInterface,NoComplexOperands
   ]> {
   let summary="compare operation";
 
@@ -82,7 +82,7 @@ def Nova_ReductionKind : I32EnumAttr<"ReductionKind",
 {
   let cppNamespace = "::mlir::nova";
 }
-def Nova_ReduceOp : Op<Nova_Dialect,"reduce", [Pure,InferTypeOpInterface]> {
+def Nova_ReduceOp : Op<Nova_Dialect,"reduce", [Pure,InferTypeOpInterface,NoComplexOperands]> {
   let summary = "Generic reduction operation";
   let description = [{
     Performs reduction operation across specified dimensions of a tensor.
@@ -312,7 +312,7 @@ def Nova_SqrtOp : Nova_UnaryOp<"sqrt", [Pure, SameOperandsAndResultType]> {
   }];
 }
 
-def Nova_SignOp : Nova_UnaryOp<"sign", [Pure,InferTypeOpInterface ]> {
+def Nova_SignOp : Nova_UnaryOp<"sign", [Pure,InferTypeOpInterface,NoComplexOperands]> {
   let arguments = (ins Nova_Tensor:$input);
   let results = (outs Nova_Tensor:$output);
   
@@ -772,7 +772,7 @@ def Nova_PowOp : Nova_BinaryOp<"pow", []> {
   }];
 }
 
-def Nova_MaxOp : Nova_BinaryOp<"max", [Commutative]> {
+def Nova_MaxOp : Nova_BinaryOp<"max", [Commutative,NoComplexOperands]> {
   let summary = "Elementwise tensor maximum";
   let description = [{
     Performs element-wise max operation on tensors.
@@ -783,7 +783,7 @@ def Nova_MaxOp : Nova_BinaryOp<"max", [Commutative]> {
   }];
 }
 
-def Nova_MinOp : Nova_BinaryOp<"min", [Commutative]> {
+def Nova_MinOp : Nova_BinaryOp<"min", [Commutative,NoComplexOperands]> {
   let summary = "Elementwise tensor minimum";
   let description = [{
     Performs element-wise min operation on tensors.
@@ -794,7 +794,7 @@ def Nova_MinOp : Nova_BinaryOp<"min", [Commutative]> {
   }];
 }
 
-def Nova_AndOp : Nova_BinaryOp<"and", [Commutative]> {
+def Nova_AndOp : Nova_BinaryOp<"and", [Commutative,NoComplexOperands]> {
   let summary = "Elementwise logical AND";
   let description = [{
     Performs element-wise logical AND operation on tensors.
@@ -805,7 +805,7 @@ def Nova_AndOp : Nova_BinaryOp<"and", [Commutative]> {
   }];
 }
 
-def Nova_OrOp : Nova_BinaryOp<"or", [Commutative]> {
+def Nova_OrOp : Nova_BinaryOp<"or", [Commutative,NoComplexOperands]> {
   let summary = "Elementwise logical OR";
   let description = [{
     Performs element-wise logical OR operation on tensors.
@@ -816,7 +816,7 @@ def Nova_OrOp : Nova_BinaryOp<"or", [Commutative]> {
   }];
 }
 
-def Nova_XorOp : Nova_BinaryOp<"xor", [Commutative]> {
+def Nova_XorOp : Nova_BinaryOp<"xor", [Commutative,NoComplexOperands]> {
   let summary = "Elementwise logical XOR";
   let description = [{
     Performs element-wise logical XOR operation on tensors.
@@ -827,7 +827,7 @@ def Nova_XorOp : Nova_BinaryOp<"xor", [Commutative]> {
   }];
 }
 
-def Nova_NotOp : Nova_UnaryOp<"not", [Commutative,InferTypeOpInterface]> {
+def Nova_NotOp : Nova_UnaryOp<"not", [Commutative,InferTypeOpInterface,NoComplexOperands]> {
   let summary = "Elementwise logical XOR";
   let description = [{
     Performs element-wise logical NOT operation on tensors.
@@ -848,7 +848,7 @@ def Nova_NotOp : Nova_UnaryOp<"not", [Commutative,InferTypeOpInterface]> {
   }];
 }
 
-def Nova_MatmulOp : Op<Nova_Dialect,"matmul", [Pure, DeclareOpInterfaceMethods<InferTypeOpInterface>]> {
+def Nova_MatmulOp : Op<Nova_Dialect,"matmul", [Pure, DeclareOpInterfaceMethods<InferTypeOpInterface>,NoComplexOperands]> {
   let arguments = (ins Nova_Tensor:$lhs, Nova_Tensor:$rhs);
   let results = (outs Nova_Tensor:$result);
   let hasVerifier=1;  

@@ -1,24 +1,24 @@
-module {
-  func.func @main(%arg0: tensor<4096x4096xf64>, %arg1: tensor<4096x4096xi32>) -> tensor<4096x4096xf32> {
-    %0 = nova.sin %arg1 : tensor<4096x4096xi32>
-    %1 = nova.cos %0 : tensor<4096x4096xf32>
-    %2 = nova.tan %1 : tensor<4096x4096xf32>
-    %3 = nova.sinh %2 : tensor<4096x4096xf32>
-    %4 = nova.cosh %3 : tensor<4096x4096xf32>
-    %41 = nova.asin %4 : tensor<4096x4096xf32>
-    %411 = nova.acos %41: tensor<4096x4096xf32>
-    %412 = nova.atan %411 : tensor<4096x4096xf32>
-    %413 = nova.asinh %412 : tensor<4096x4096xf32>
-    %414 = nova.acosh %413 : tensor<4096x4096xf32>
-    %415 = nova.atanh %414 : tensor<4096x4096xf32>
-    return %415 : tensor<4096x4096xf32>
+func.func @f(%input : memref<10xf32>, %output : memref<10xf32>, %reduc : memref<10xf32>) {
+  %zero = arith.constant 0. : f32
+  %one = arith.constant 1. : f32
+  affine.for %i = 0 to 10 {
+    %0 = affine.load %input[%i] : memref<10xf32>
+    %2 = arith.addf %0, %one : f32
+    affine.store %2, %output[%i] : memref<10xf32>
   }
+  affine.for %i = 0 to 10 {
+    %0 = affine.load %input[%i] : memref<10xf32>
+    %1 = arith.addf %0, %zero : f32
+    affine.store %1, %reduc[%i] : memref<10xf32>
+  }
+  return 
 }
 
-module {
-  func.func @main(%arg0: tensor<1x8x3xi32>) -> tensor<8x3xi32> {
- %1 = "tosa.const_shape"() <{values = dense<[8, 3]> : tensor<2xindex>}> : () -> !tosa.shape<2>
- %2 = "tosa.reshape"(%arg0, %1) : (tensor<1x8x3xi32>, !tosa.shape<2>) -> tensor<8x3xi32>
- return %2 :tensor<8x3xi32>
-  }
-}
+//func.func @f_nova(%input : tensor<10xf32>) -> (tensor<10xf32>, tensor<1xf32>) {
+//  %one = nova.constant {value = dense<[1.0]> : tensor<1xf32>} : tensor<1xf32>
+//  %zero = nova.constant {value = dense<[0.0]> : tensor<1xf32>} : tensor<1xf32>
+//  %output = nova.add %input, %one : tensor<10xf32>, tensor<1xf32>
+//  %reduc = nova.add %input, %zero : tensor<10xf32>, tensor<1xf32>
+//  return %output, %reduc : tensor<10xf32>, tensor<10xf32>
+//}
+

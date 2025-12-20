@@ -102,7 +102,7 @@ static LogicalResult BinaryTypePromotionReturnType(MLIRContext *context, std::op
     case 64:
       resultType = builder.getI64Type();
       break;
-
+    case 32:
       resultType = builder.getI32Type();
       break;
     case 16:
@@ -130,7 +130,6 @@ static LogicalResult BinaryTypePromotionReturnType(MLIRContext *context, std::op
       RankedTensorType::get(*broadcastedShape, resulType));
   return success();
 }
-
 // float promotion for result type
 static LogicalResult BinaryFloatPromotionReturnType(MLIRContext *context, std::optional<Location> loc, ValueRange operands,
                                                     DictionaryAttr attributes, OpaqueProperties properties,
@@ -529,6 +528,7 @@ LogicalResult MaxOp::inferReturnTypes(
     RegionRange regions, llvm::SmallVectorImpl<Type> &inferredReturnTypes)
 {
   return BinaryTypePromotionReturnType(
+
       context, loc, operands, attributes, properties, regions, inferredReturnTypes);
 }
 
@@ -1007,7 +1007,7 @@ LogicalResult TransposeOp::inferReturnTypes(
   // handling negative indexing
   auto inputType = dyn_cast<TensorType>(operands[0].getType());
   auto shape = inputType.getShape();
-  auto size =shape.size();
+  int64_t size =shape.size();
   if(size<1){
     mlir::emitError(*loc)<<"transpose only accepts above rank 1";
   }

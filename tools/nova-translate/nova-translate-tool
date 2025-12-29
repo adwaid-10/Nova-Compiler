@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Nova Translate Tool - Object Code Generation
+# This script wraps mlir-translate and llc to avoid LLVM option registration conflicts.
+
+set -e
+
+# Ensure LLVM/MLIR tools are in PATH
+export PATH="/home/blu-bridge023/Desktop/llvm-project/build/bin:$PATH"
+
+# Support input from stdin if no file is provided
+INPUT_FILE="${1:-/dev/stdin}"
+OUTPUT_FILE="a.o"
+
+# Simple argument parsing
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o)
+      OUTPUT_FILE="$2"
+      shift 2
+      ;;
+    *)
+      INPUT_FILE="$1"
+      shift
+      ;;
+  esac
+done
+
+if [ "$INPUT_FILE" == "-" ]; then
+  INPUT_FILE="/dev/stdin"
+fi
+
+# Create a temporary file for LLVM IR if we are piping
+TEMP_LL="$(mktemp --suffix=.ll)"
+
+# Step 1: Translate MLIR to LLVM IR
+# Note: we use mlir-translate which is should be available in the path or build dir
+# Here we assume it's in the build directory or environment.
+# Since we are in the Nova-Compiler environment, we look for mlir-translate.
+MLIR_TRANSLATE="mlir-translate"
+LLC="llc"
+
+$MLIR_TRANSLATE --mlir-to-llvmir "$INPUT_FILE" -o "$TEMP_LL"
+
+# Step 2: Translate LLVM IR to Object file
+$LLC -filetype=obj "$TEMP_LL" -o "$OUTPUT_FILE"
+
+# Cleanup
+rm "$TEMP_LL"
+
+echo "[nova-translate] Generated object file: $OUTPUT_FILE"

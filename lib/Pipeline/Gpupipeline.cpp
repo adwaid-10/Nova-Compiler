@@ -93,7 +93,7 @@ namespace nova {
 
     // 6. LINALG TO PARALLEL LOOPS
     pm.addPass(mlir::createConvertLinalgToParallelLoopsPass());
-    //pm.addNestedPass<mlir::func::FuncOp>(mlir::createParallelLoopFusionPass());
+    pm.addNestedPass<mlir::func::FuncOp>(mlir::createParallelLoopFusionPass());
     pm.addPass(mlir::createParallelLoopTilingPass({32, 32, 32}));
     pm.addPass(createCanonicalizerPass());
 

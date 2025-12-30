@@ -45,6 +45,7 @@ def Nova_Tensor:TensorOf<[Nova_ElementType]>;
       }()
     }]>
   ]>, "a ranked tensor with a nova device encoding">;*/
+  
   // operations start
 //enum 
 def Nova_Comparisonenum:I32EnumAttr<"ComparisonType","How operands should be compared",[

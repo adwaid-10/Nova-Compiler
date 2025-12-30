@@ -38,6 +38,9 @@ add_mlir_library(NovaPipelines
   MLIRBufferizationToMemRef
   MLIRSCFToGPU
   MLIRGPUTransforms
+  MLIRGPUPipelines
+  MLIRNVVMTarget
+  MLIRAffineTransforms
   MLIRGPUToNVVMTransforms
   MLIRNVVMToLLVMIRTranslation
   MLIRTosaToLinalg

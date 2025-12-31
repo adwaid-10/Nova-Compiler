@@ -8,6 +8,7 @@
 #define NOVA_RUNTIME_EXECUTOR_EXECUTIONPLAN_H
 
 #include "Runtime/Executor/KernelRegistry.h"
+#include "Runtime/Executor/DependencyGraph.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -18,7 +19,8 @@ namespace nova {
 namespace runtime {
 
 // Forward declarations
-class DependencyGraph;
+// Forward declarations
+// class DependencyGraph;
 
 // Tensor metadata (shape, dtype, device)
 struct TensorMetadata {

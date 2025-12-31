@@ -1,3 +1,4 @@
 add_subdirectory(Core)
 add_subdirectory(Executor)
-# add_subdirectory(Kernels)  # Coming in Phase 3
+add_subdirectory(Kernels)
+add_subdirectory(Test)

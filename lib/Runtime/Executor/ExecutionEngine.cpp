@@ -35,7 +35,7 @@ AsyncValue* ExecutionEngine::Execute(
   // Dispatch all tasks
   for (const auto& task : plan.tasks) {
     // Create AsyncValue for this task's output
-    intermediate_values[task.task_id] = host_->MakeUnconstructedAsyncValue<void>();
+    intermediate_values[task.task_id] = host_->MakeUnconstructedAsyncValue<void*>();
     
     // Get dependencies
     std::vector<AsyncValue*> deps;
@@ -103,8 +103,18 @@ void ExecutionEngine::DispatchTask(
       
       // For now, just mark output as complete
       // In real implementation, we'd transfer the result
-      if (auto* concrete_output = dynamic_cast<ConcreteAsyncValue<void>*>(output)) {
-        concrete_output->emplace();
+      // Transfer result from kernel to the output AsyncValue
+      // We assume kernel returns AsyncValue<void*> as per convention for our runtime
+      if (auto* concrete_result = dynamic_cast<ConcreteAsyncValue<void*>*>(result)) {
+         if (auto* concrete_output = dynamic_cast<ConcreteAsyncValue<void*>*>(output)) {
+           // We propagate the pointer (Tensor*)
+           concrete_output->emplace(concrete_result->get());
+         }
+      } else {
+        // Fallback for void results
+        if (auto* concrete_output = dynamic_cast<ConcreteAsyncValue<void>*>(output)) {
+             concrete_output->emplace();
+        }
       }
       
     } catch (const std::exception& e) {

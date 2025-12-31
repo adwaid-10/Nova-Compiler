@@ -74,6 +74,17 @@ private:
   alignas(T) std::byte storage_[sizeof(T)];
 };
 
+// Specialization for void (no storage needed)
+template <> class ConcreteAsyncValue<void> : public AsyncValue {
+public:
+  ConcreteAsyncValue() : AsyncValue(State::Unconstructed) {}
+
+  // For void, emplace just marks as available
+  void emplace() {
+    NotifyAvailable(State::Concrete);
+  }
+};
+
 } // namespace runtime
 } // namespace nova
 

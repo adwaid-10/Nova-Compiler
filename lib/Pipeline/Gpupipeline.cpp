@@ -153,14 +153,19 @@ namespace nova {
     gpuPm.addPass(mlir::createCSEPass());
     gpuPm.addPass(mlir::createReconcileUnrealizedCastsPass());
     
-    pm.addPass(mlir::createGpuToLLVMConversionPass());
-    
+    // 9. SERIALIZE GPU MODULE TO BINARY (MUST BE BEFORE GpuToLLVM)
     mlir::GpuModuleToBinaryPassOptions binaryOptions;
-    binaryOptions.toolkitPath = "/usr/local/cuda-12.1";
+    binaryOptions.toolkitPath = "/usr/local/cuda-13.0";
     pm.addPass(mlir::createGpuModuleToBinaryPass(binaryOptions));
     pm.addPass(createCanonicalizerPass());
     
-    // 10. FINAL LOWERING TO LLVM
+    // 10. CONVERT REMAINING BUFFERIZATION OPS TO MEMREF
+    pm.addPass(mlir::createConvertBufferizationToMemRefPass());
+    
+    // 11. CONVERT gpu.launch_func TO LLVM RUNTIME CALLS
+    pm.addPass(mlir::createGpuToLLVMConversionPass());
+    
+    // 11. FINAL LOWERING TO LLVM
     pm.addPass(mlir::createSCFToControlFlowPass());
     pm.addPass(mlir::createConvertControlFlowToLLVMPass());
     pm.addPass(mlir::createConvertFuncToLLVMPass());
